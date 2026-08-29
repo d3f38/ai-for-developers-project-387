@@ -1,0 +1,30 @@
+{
+  "name": "ai-for-developers-project-386",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Calendar Booking Service — TypeSpec API Contract",
+  "scripts": {
+    "compile": "tsp compile src",
+    "lint": "tsp lint src",
+    "api-mock": "prism mock api-specs/openapi.yaml --port 4010",
+    "dev": "concurrently -n api,web -c blue,green \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "dev:mock": "concurrently -n api,web -c blue,green \"npm run api-mock\" \"cd frontend && npm run dev\"",
+    "build": "cd frontend && npm run build",
+    "e2e:build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "e2e:server": "npm run e2e:build && node backend/dist/index.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "dependencies": {
+    "@typespec/compiler": "^0.60.0",
+    "@typespec/http": "^0.60.0",
+    "@typespec/openapi": "^0.60.0",
+    "@typespec/openapi3": "^0.60.0",
+    "@typespec/rest": "^0.60.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@stoplight/prism-cli": "^5.14.2",
+    "concurrently": "^10.0.4"
+  }
+}

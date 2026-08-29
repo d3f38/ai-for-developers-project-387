@@ -1,0 +1,396 @@
+openapi: 3.0.0
+info:
+  title: Calendar Booking Service
+  version: 0.0.0
+tags:
+  - name: 'Owner: Типы событий'
+  - name: 'Owner: Бронирования'
+  - name: 'Guest: Типы событий'
+  - name: 'Guest: Слоты'
+  - name: 'Guest: Бронирования'
+paths:
+  /api/bookings:
+    get:
+      operationId: OwnerBookings_list
+      description: |-
+        Получить список всех предстоящих бронирований.
+        Отсортированы по дате (ближайшие сверху).
+        Включает бронирования всех типов событий.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      tags:
+        - 'Owner: Бронирования'
+  /api/event-types:
+    get:
+      operationId: OwnerEventTypes_list
+      description: Получить список всех типов событий.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventType'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      tags:
+        - 'Owner: Типы событий'
+    post:
+      operationId: OwnerEventTypes_create
+      description: Создать новый тип события.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      tags:
+        - 'Owner: Типы событий'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventTypeUpsert'
+  /api/event-types/{id}:
+    get:
+      operationId: OwnerEventTypeById_get
+      description: Получить тип события по id.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      tags:
+        - 'Owner: Типы событий'
+    put:
+      operationId: OwnerEventTypeById_update
+      description: Обновить тип события (название, описание, длительность).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      tags:
+        - 'Owner: Типы событий'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventTypeUpsert'
+    delete:
+      operationId: OwnerEventTypeById_delete
+      description: Удалить тип события. Нельзя удалить, если есть активные бронирования.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      tags:
+        - 'Owner: Типы событий'
+  /api/public/bookings:
+    post:
+      operationId: GuestBookings_create
+      description: |-
+        Создать бронирование на выбранный слот.
+        Сервер проверяет:
+        - Тип события существует
+        - Слот находится в допустимом окне (14 дней)
+        - Слот свободен
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      tags:
+        - 'Guest: Бронирования'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreate'
+  /api/public/event-types:
+    get:
+      operationId: GuestEventTypes_list
+      description: Получить список доступных типов событий (название, описание, длительность).
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventType'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      tags:
+        - 'Guest: Типы событий'
+  /api/public/slots:
+    get:
+      operationId: GuestSlots_getAvailableSlots
+      description: Получить доступные слоты для типа события.
+      parameters:
+        - name: eventTypeId
+          in: query
+          required: true
+          description: Идентификатор типа события
+          schema:
+            type: integer
+            format: int64
+          explode: false
+        - name: dateFrom
+          in: query
+          required: false
+          description: Начало диапазона (UTC, по умолчанию — сегодня)
+          schema:
+            type: string
+            format: date-time
+          explode: false
+        - name: dateTo
+          in: query
+          required: false
+          description: Конец диапазона (UTC, по умолчанию — +14 дней)
+          schema:
+            type: string
+            format: date-time
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Slot'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      tags:
+        - 'Guest: Слоты'
+components:
+  schemas:
+    ApiError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      description: Стандартная ошибка API.
+    Booking:
+      type: object
+      required:
+        - id
+        - eventTypeId
+        - eventTypeName
+        - guestName
+        - startTime
+        - endTime
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор
+        eventTypeId:
+          type: integer
+          format: int64
+          description: Идентификатор типа события
+        eventTypeName:
+          type: string
+          description: Название типа события
+        guestName:
+          type: string
+          description: Имя гостя
+        guestEmail:
+          type: string
+          description: Email гостя (опционально)
+        startTime:
+          type: string
+          format: date-time
+          description: Начало слота в UTC
+        endTime:
+          type: string
+          format: date-time
+          description: Конец слота в UTC
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата создания бронирования
+      description: Бронирование — запись гостя на конкретный слот.
+    BookingCreate:
+      type: object
+      required:
+        - eventTypeId
+        - guestName
+        - startTime
+      properties:
+        eventTypeId:
+          type: integer
+          format: int64
+        guestName:
+          type: string
+        guestEmail:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+      description: Данные для создания бронирования.
+    EventType:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - durationMinutes
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор
+        name:
+          type: string
+          description: Название
+        description:
+          type: string
+          description: Описание
+        durationMinutes:
+          type: integer
+          format: int32
+          description: Длительность в минутах
+      description: Тип события — услуга владельца календаря.
+    EventTypeUpsert:
+      type: object
+      required:
+        - name
+        - description
+        - durationMinutes
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        durationMinutes:
+          type: integer
+          format: int32
+      description: Данные для создания или обновления типа события.
+    Slot:
+      type: object
+      required:
+        - startTime
+        - endTime
+        - available
+      properties:
+        startTime:
+          type: string
+          format: date-time
+          description: Начало слота в UTC
+        endTime:
+          type: string
+          format: date-time
+          description: Конец слота в UTC
+        available:
+          type: boolean
+          description: Доступен ли слот для бронирования
+      description: |-
+        Свободный временной слот.
+        Формируется в окне 14 дней от текущей даты.
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+    variables: {}
