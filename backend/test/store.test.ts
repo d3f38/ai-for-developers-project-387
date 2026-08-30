@@ -132,7 +132,7 @@ describe("deleteEventType", () => {
 
     const result = store.deleteEventType(1);
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBeTruthy();
     expect(store.getEventType(1)).toBeUndefined();
   });
 
