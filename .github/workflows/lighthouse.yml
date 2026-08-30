@@ -1,0 +1,49 @@
+name: Lighthouse CI
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Build Docker image
+        run: docker build -t calendar-app .
+
+      - name: Run server
+        run: |
+          docker run -d -p 3000:3000 --name calendar-app calendar-app
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/health; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Waiting for server ($i)..."
+            sleep 2
+          done
+
+      - name: Run Lighthouse CI
+        run: npx @lhci/cli autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 14
+
+      - name: Stop server
+        if: always()
+        run: docker stop calendar-app || true
