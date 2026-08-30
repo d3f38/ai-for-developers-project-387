@@ -2,7 +2,7 @@ name: Lighthouse CI
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "0 9 * * 1"
   workflow_dispatch:
 
 permissions:
